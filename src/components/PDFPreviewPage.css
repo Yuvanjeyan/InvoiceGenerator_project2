@@ -1,0 +1,46 @@
+@media print {
+  * {
+    background: white !important;
+    color: black !important;
+  }
+
+  body {
+    background: white;
+    padding: 0;
+    margin: 0;
+  }
+
+  .max-w-6xl {
+    max-width: 100%;
+  }
+
+  header {
+    display: none !important;
+  }
+
+  button {
+    display: none !important;
+  }
+
+  #invoice-print {
+    box-shadow: none;
+    padding: 0;
+    background: white;
+  }
+
+  h1,
+  h2,
+  h3 {
+    page-break-after: avoid;
+    color: black !important;
+  }
+
+  table {
+    page-break-inside: avoid;
+    border-collapse: collapse;
+  }
+
+  tr {
+    page-break-inside: avoid;
+  }
+}

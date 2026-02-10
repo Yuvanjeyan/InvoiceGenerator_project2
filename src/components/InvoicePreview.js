@@ -94,7 +94,7 @@ const InvoicePreview = ({ invoice }) => {
         )}
 
         {/* Footer */}
-        <div className="text-center pt-5 border-t border-gray-300 text-gray-600 text-sm">
+        <div className="text-center pt-5 border-t border-gray-300 text-gray-600 text-sm mt-auto">
           <p>Thank you for your business!</p>
         </div>
       </div>

@@ -116,8 +116,8 @@ This creates an optimized production build in the `build/` folder.
 
 3. **Add Invoice Details**:
    - Invoice number (pre-filled, e.g., INV-001)
-   - Invoice date (choose from calendar or type)
-   - Due date (choose from calendar or type)
+   - Invoice date (cannot be earlier than today)
+   - Due date (cannot be earlier than today and must be on/after invoice date)
 
 4. **Add Line Items**:
    - Click "Add Item" to create new line items

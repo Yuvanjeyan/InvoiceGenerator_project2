@@ -1,12 +1,63 @@
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import jsPDF from 'jspdf';
+import html2pdf from 'html2pdf.js';
 import './PDFPreviewPage.css';
+import { getInvoiceValidation } from '../utils/validation';
 
 const PDFPreviewPage = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const invoice = location.state?.invoice;
+  const hasAutoDownloadedRef = useRef(false);
+
+  const formatDate = (value) => (value ? new Date(value).toLocaleDateString() : '');
+  const validation = getInvoiceValidation(invoice);
+  const isInvoiceValid = validation.isValid;
+  const subtotal = (invoice?.items || []).reduce((sum, item) => sum + (parseFloat(item.amount) || 0), 0);
+  const taxRate = parseFloat(invoice?.tax) || 0;
+  const discountAmount = parseFloat(invoice?.discount) || 0;
+  const taxAmount = subtotal * (taxRate / 100);
+  const total = subtotal + taxAmount - discountAmount;
+
+  const downloadPDFWithHtml2PDF = () => {
+    const element = document.getElementById('invoice-print');
+    if (!element) return;
+
+    element.classList.add('export-mode');
+
+    const options = {
+      margin: 10,
+      filename: `Invoice_${invoice?.invoiceNumber || 'Draft'}.pdf`,
+      image: { type: 'jpeg', quality: 0.98 },
+      html2canvas: { scale: 2, useCORS: true },
+      jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+    };
+
+    const worker = html2pdf().set(options).from(element).toPdf();
+    worker
+      .get('pdf')
+      .then((pdf) => {
+        const pageCount = pdf.internal.getNumberOfPages();
+        const pageWidth = pdf.internal.pageSize.getWidth();
+        const pageHeight = pdf.internal.pageSize.getHeight();
+        pdf.setFontSize(10);
+        for (let page = 1; page <= pageCount; page += 1) {
+          pdf.setPage(page);
+          pdf.text('Thank you for your business!', pageWidth / 2, pageHeight - 6, { align: 'center' });
+        }
+      })
+      .then(() => worker.save())
+      .finally(() => {
+        element.classList.remove('export-mode');
+      });
+  };
+
+  useEffect(() => {
+    if (invoice && location.state?.autoDownload && isInvoiceValid && !hasAutoDownloadedRef.current) {
+      hasAutoDownloadedRef.current = true;
+      setTimeout(() => downloadPDFWithHtml2PDF(), 0);
+    }
+  }, [invoice, location.state?.autoDownload, isInvoiceValid]);
 
   if (!invoice) {
     return (
@@ -18,166 +69,12 @@ const PDFPreviewPage = () => {
             onClick={() => navigate('/')}
             className="px-6 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-lg transition"
           >
-            ← Back to Invoice
+            Back to Invoice
           </button>
         </div>
       </div>
     );
   }
-
-  const formatDate = (value) => (value ? new Date(value).toLocaleDateString() : '');
-  const subtotal = invoice.items.reduce((sum, item) => sum + (parseFloat(item.amount) || 0), 0);
-  const taxRate = parseFloat(invoice.tax) || 0;
-  const discountAmount = parseFloat(invoice.discount) || 0;
-  const taxAmount = subtotal * (taxRate / 100);
-  const total = subtotal + taxAmount - discountAmount;
-
-  const downloadPDFWithJsPDF = () => {
-    const doc = new jsPDF();
-    const pageHeight = doc.internal.pageSize.getHeight();
-    const pageWidth = doc.internal.pageSize.getWidth();
-    const margin = 15;
-    let yPosition = margin;
-
-    // Header
-    doc.setFontSize(20);
-    doc.text('INVOICE', pageWidth / 2, yPosition, { align: 'center' });
-    yPosition += 15;
-
-    // Company Info
-    doc.setFontSize(12);
-    doc.text(invoice.companyName, margin, yPosition);
-    yPosition += 7;
-    doc.setFontSize(10);
-    doc.text(invoice.companyEmail, margin, yPosition);
-    yPosition += 5;
-    doc.text(invoice.companyPhone, margin, yPosition);
-    yPosition += 5;
-    doc.text(invoice.companyAddress, margin, yPosition, { maxWidth: pageWidth - 2 * margin });
-    yPosition += 10;
-
-    // Invoice Details
-    const detailsX = pageWidth - margin - 50;
-    doc.setFontSize(10);
-    doc.text(`Invoice #: ${invoice.invoiceNumber}`, detailsX, yPosition);
-    yPosition += 7;
-    doc.text(`Date: ${formatDate(invoice.date)}`, detailsX, yPosition);
-    yPosition += 7;
-    doc.text(`Due Date: ${formatDate(invoice.dueDate)}`, detailsX, yPosition);
-    yPosition += 15;
-
-    // Bill To
-    doc.setFontSize(11);
-    doc.text('BILL TO:', margin, yPosition);
-    yPosition += 7;
-    doc.setFontSize(10);
-    doc.text(invoice.clientName, margin, yPosition);
-    yPosition += 5;
-    doc.text(invoice.clientEmail, margin, yPosition);
-    yPosition += 5;
-    doc.text(invoice.clientPhone, margin, yPosition);
-    yPosition += 5;
-    doc.text(invoice.clientAddress, margin, yPosition, { maxWidth: pageWidth - 2 * margin });
-    yPosition += 15;
-
-    // Items Table
-    doc.setFontSize(10);
-    const tableStartY = yPosition;
-    const columnWidths = [70, 20, 30, 30];
-    const columns = ['Description', 'Qty', 'Rate', 'Amount'];
-    const rowHeight = 8;
-
-    // Header row with border
-    doc.setFillColor(79, 70, 229); // indigo color
-    doc.setTextColor(255, 255, 255); // white text
-    let xPos = margin;
-    columns.forEach((col, i) => {
-      doc.rect(xPos, tableStartY, columnWidths[i], rowHeight, 'F'); // 'F' fills the rect
-      doc.text(col, xPos + 3, tableStartY + 5, { maxWidth: columnWidths[i] - 4 });
-      xPos += columnWidths[i];
-    });
-
-    // Draw header borders
-    xPos = margin;
-    for (let i = 0; i < 4; i++) {
-      doc.setDrawColor(0);
-      doc.rect(xPos, tableStartY, columnWidths[i], rowHeight);
-      xPos += columnWidths[i];
-    }
-
-    // Items rows
-    doc.setTextColor(0, 0, 0); // black text
-    yPosition = tableStartY + rowHeight;
-    invoice.items.forEach((item, index) => {
-      if (yPosition > pageHeight - 50) {
-        doc.addPage();
-        yPosition = margin;
-      }
-
-      // Alternate row colors
-      if (index % 2 === 0) {
-        doc.setFillColor(245, 245, 245); // light gray
-        xPos = margin;
-        for (let i = 0; i < 4; i++) {
-          doc.rect(xPos, yPosition, columnWidths[i], rowHeight, 'F');
-          xPos += columnWidths[i];
-        }
-      }
-
-      // Draw borders
-      xPos = margin;
-      for (let i = 0; i < 4; i++) {
-        doc.rect(xPos, yPosition, columnWidths[i], rowHeight);
-        xPos += columnWidths[i];
-      }
-
-      // Add text
-      xPos = margin;
-      doc.text(item.description.substring(0, 12), xPos + 2, yPosition + 5, { maxWidth: columnWidths[0] - 4 });
-      xPos += columnWidths[0];
-      doc.text(item.quantity.toString(), xPos + 6, yPosition + 5, { align: 'center' });
-      xPos += columnWidths[1];
-      doc.text(`$${(parseFloat(item.rate) || 0).toFixed(2)}`, xPos + 20, yPosition + 5, { align: 'right' });
-      xPos += columnWidths[2];
-      doc.text(`$${(parseFloat(item.amount) || 0).toFixed(2)}`, xPos + 20, yPosition + 5, { align: 'right' });
-
-      yPosition += rowHeight;
-    });
-
-    yPosition += 10;
-
-    // Summary
-    doc.setFontSize(10);
-    doc.text(`Subtotal: $${subtotal.toFixed(2)}`, pageWidth - margin - 50, yPosition);
-    yPosition += 8;
-
-    if (taxRate > 0) {
-      doc.text(`Tax (${taxRate}%): $${taxAmount.toFixed(2)}`, pageWidth - margin - 50, yPosition);
-      yPosition += 8;
-    }
-
-    if (discountAmount > 0) {
-      doc.text(`Discount: -$${discountAmount.toFixed(2)}`, pageWidth - margin - 50, yPosition);
-      yPosition += 8;
-    }
-
-    doc.setFontSize(12);
-    doc.setFont(undefined, 'bold');
-    doc.text(`Total: $${total.toFixed(2)}`, pageWidth - margin - 50, yPosition);
-
-    // Notes
-    if (invoice.notes) {
-      yPosition += 15;
-      doc.setFont(undefined, 'normal');
-      doc.setFontSize(10);
-      doc.text('Notes:', margin, yPosition);
-      yPosition += 7;
-      doc.text(invoice.notes, margin, yPosition, { maxWidth: pageWidth - 2 * margin });
-    }
-
-    // Download
-    doc.save(`Invoice_${invoice.invoiceNumber}.pdf`);
-  };
 
   const handleNewInvoice = () => {
     localStorage.removeItem('invoiceData');
@@ -201,8 +98,10 @@ const PDFPreviewPage = () => {
                 ➕ New Invoice
               </button>
               <button
-                onClick={downloadPDFWithJsPDF}
-                className="px-4 py-2 bg-white hover:bg-gray-100 text-indigo-600 font-semibold rounded-lg transition"
+                onClick={downloadPDFWithHtml2PDF}
+                disabled={!isInvoiceValid}
+                title={!isInvoiceValid ? 'Complete required fields before downloading.' : undefined}
+                className={`px-4 py-2 font-semibold rounded-lg transition ${isInvoiceValid ? 'bg-white hover:bg-gray-100 text-indigo-600' : 'bg-gray-200 text-gray-400 cursor-not-allowed'}`}
               >
                 ⬇️ Download PDF
               </button>
@@ -216,7 +115,7 @@ const PDFPreviewPage = () => {
                 onClick={() => navigate('/')}
                 className="px-4 py-2 bg-white hover:bg-gray-100 text-indigo-600 font-semibold rounded-lg transition"
               >
-                ← Back
+                🔄 Back
               </button>
             </div>
           </div>
@@ -273,7 +172,7 @@ const PDFPreviewPage = () => {
             </table>
 
             {/* Summary */}
-            <div className="flex justify-end mb-8">
+            <div className="flex justify-end mb-8 summary-section">
               <div className="w-80 p-5 bg-gray-50 rounded-lg">
                 <div className="flex justify-between mb-2 text-sm">
                   <span>Subtotal:</span>
@@ -300,14 +199,14 @@ const PDFPreviewPage = () => {
 
             {/* Notes */}
             {invoice.notes && (
-              <div className="p-4 bg-blue-50 rounded-lg border-l-4 border-indigo-500 mb-6">
+              <div className="p-4 bg-blue-50 rounded-lg border-l-4 border-indigo-500 mb-6 notes-section">
                 <h3 className="font-bold text-gray-800 mb-1">Notes</h3>
                 <p className="text-sm text-gray-700">{invoice.notes}</p>
               </div>
             )}
 
             {/* Footer */}
-            <div className="text-center pt-5 border-t border-gray-300 text-gray-600 text-sm">
+            <div className="invoice-footer text-center pt-5 border-t border-gray-300 text-gray-600 text-sm">
               <p>Thank you for your business!</p>
             </div>
           </div>

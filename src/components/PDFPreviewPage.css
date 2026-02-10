@@ -26,6 +26,10 @@
     box-shadow: none;
     padding: 0;
     background: white;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    padding-bottom: 24mm;
   }
 
   h1,
@@ -43,4 +47,47 @@
   tr {
     page-break-inside: avoid;
   }
+
+  .invoice-footer {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: white;
+    padding: 8mm 0 6mm;
+  }
+}
+
+#invoice-print {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.invoice-footer {
+  margin-top: auto;
+  
+}
+
+#invoice-print.export-mode {
+  min-height: auto;
+  display: block;
+}
+
+#invoice-print.export-mode {
+  padding-bottom: 20mm;
+}
+
+#invoice-print.export-mode .invoice-footer {
+  display: none;
+}
+
+#invoice-print.export-mode .summary-section {
+  break-inside: avoid;
+  page-break-inside: avoid;
+}
+
+#invoice-print.export-mode .notes-section {
+  break-inside: avoid;
+  page-break-inside: avoid;
 }

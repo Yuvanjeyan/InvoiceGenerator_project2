@@ -4,6 +4,7 @@ import './App.css';
 import InvoiceForm from './components/InvoiceForm';
 import PDFExport from './components/PDFExport';
 import PDFPreviewPage from './components/PDFPreviewPage';
+import { getInvoiceValidation } from './utils/validation';
 
 const defaultInvoice = {
   invoiceNumber: 'INV-001',
@@ -39,6 +40,8 @@ function InvoiceGenerator() {
     setInvoice(updatedInvoice);
   };
 
+  const validation = getInvoiceValidation(invoice);
+
   const handleNewInvoice = () => {
     localStorage.removeItem('invoiceData');
     setInvoice(defaultInvoice);
@@ -60,7 +63,7 @@ function InvoiceGenerator() {
               >
                 ➕ New Invoice
               </button>
-              <PDFExport invoice={invoice} />
+              <PDFExport invoice={invoice} isInvoiceValid={validation.isValid} />
             </div>
           </div>
         </div>
@@ -68,7 +71,7 @@ function InvoiceGenerator() {
       <div className="p-6">
         <div className="max-w-5xl mx-auto">
           <div className="bg-white rounded-2xl p-8 shadow-lg">
-            <InvoiceForm invoice={invoice} onInvoiceChange={handleInvoiceChange} />
+            <InvoiceForm invoice={invoice} onInvoiceChange={handleInvoiceChange} validation={validation} />
           </div>
         </div>
       </div>

@@ -1,6 +1,14 @@
-import React from 'react';
+import React, { useState } from 'react';
+import { getInvoiceValidation } from '../utils/validation';
 
-const InvoiceForm = ({ invoice, onInvoiceChange }) => {
+const InvoiceForm = ({ invoice, onInvoiceChange, validation }) => {
+  const [touched, setTouched] = useState({});
+  const resolvedValidation = validation || getInvoiceValidation(invoice);
+  const { fieldErrors = {}, itemsErrors = [] } = resolvedValidation;
+
+  const markTouched = (key) => {
+    setTouched((prev) => ({ ...prev, [key]: true }));
+  };
   const handleCompanyChange = (e) => {
     const { name, value } = e.target;
     onInvoiceChange({
@@ -37,7 +45,7 @@ const InvoiceForm = ({ invoice, onInvoiceChange }) => {
     const newId = Math.max(...invoice.items.map(i => i.id), 0) + 1;
     const newItems = [
       ...invoice.items,
-      { id: newId, description: '', quantity: 1, rate: 0, amount: 0 }
+      { id: newId, description: '', quantity: '', rate: '', amount: 0 }
     ];
     onInvoiceChange({ ...invoice, items: newItems });
   };
@@ -71,8 +79,13 @@ const InvoiceForm = ({ invoice, onInvoiceChange }) => {
               value={invoice.invoiceNumber}
               onChange={handleMetadataChange}
               placeholder="INV-0001"
-              className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+              onBlur={() => markTouched('invoiceNumber')}
+              aria-invalid={Boolean(touched.invoiceNumber && fieldErrors.invoiceNumber)}
+              className={`w-full px-3 py-2 border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent ${touched.invoiceNumber && fieldErrors.invoiceNumber ? 'border-red-400' : 'border-gray-300'}`}
             />
+            {touched.invoiceNumber && fieldErrors.invoiceNumber && (
+              <p className="mt-1 text-xs text-red-600">{fieldErrors.invoiceNumber}</p>
+            )}
           </div>
           <div>
             <label className="block mb-2 font-semibold text-gray-700 text-sm">Date</label>
@@ -82,8 +95,14 @@ const InvoiceForm = ({ invoice, onInvoiceChange }) => {
               value={invoice.date}
               onChange={handleMetadataChange}
               placeholder="YYYY-MM-DD"
-              className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+              min={new Date().toISOString().split('T')[0]}
+              onBlur={() => markTouched('date')}
+              aria-invalid={Boolean(touched.date && fieldErrors.date)}
+              className={`w-full px-3 py-2 border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent ${touched.date && fieldErrors.date ? 'border-red-400' : 'border-gray-300'}`}
             />
+            {touched.date && fieldErrors.date && (
+              <p className="mt-1 text-xs text-red-600">{fieldErrors.date}</p>
+            )}
           </div>
           <div>
             <label className="block mb-2 font-semibold text-gray-700 text-sm">Due Date</label>
@@ -93,8 +112,14 @@ const InvoiceForm = ({ invoice, onInvoiceChange }) => {
               value={invoice.dueDate}
               onChange={handleMetadataChange}
               placeholder="YYYY-MM-DD"
-              className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+              min={new Date().toISOString().split('T')[0]}
+              onBlur={() => markTouched('dueDate')}
+              aria-invalid={Boolean(touched.dueDate && fieldErrors.dueDate)}
+              className={`w-full px-3 py-2 border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent ${touched.dueDate && fieldErrors.dueDate ? 'border-red-400' : 'border-gray-300'}`}
             />
+            {touched.dueDate && fieldErrors.dueDate && (
+              <p className="mt-1 text-xs text-red-600">{fieldErrors.dueDate}</p>
+            )}
           </div>
         </div>
       </div>
@@ -110,8 +135,13 @@ const InvoiceForm = ({ invoice, onInvoiceChange }) => {
             value={invoice.companyName}
             onChange={handleCompanyChange}
             placeholder="Your Company Name"
-            className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+            onBlur={() => markTouched('companyName')}
+            aria-invalid={Boolean(touched.companyName && fieldErrors.companyName)}
+            className={`w-full px-3 py-2 border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent ${touched.companyName && fieldErrors.companyName ? 'border-red-400' : 'border-gray-300'}`}
           />
+          {touched.companyName && fieldErrors.companyName && (
+            <p className="mt-1 text-xs text-red-600">{fieldErrors.companyName}</p>
+          )}
         </div>
         <div className="grid grid-cols-2 gap-4 mb-4">
           <div>
@@ -122,8 +152,13 @@ const InvoiceForm = ({ invoice, onInvoiceChange }) => {
               value={invoice.companyEmail}
               onChange={handleCompanyChange}
               placeholder="Enter your company email"
-              className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+              onBlur={() => markTouched('companyEmail')}
+              aria-invalid={Boolean(touched.companyEmail && fieldErrors.companyEmail)}
+              className={`w-full px-3 py-2 border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent ${touched.companyEmail && fieldErrors.companyEmail ? 'border-red-400' : 'border-gray-300'}`}
             />
+            {touched.companyEmail && fieldErrors.companyEmail && (
+              <p className="mt-1 text-xs text-red-600">{fieldErrors.companyEmail}</p>
+            )}
           </div>
           <div>
             <label className="block mb-2 font-semibold text-gray-700 text-sm">Phone</label>
@@ -133,8 +168,13 @@ const InvoiceForm = ({ invoice, onInvoiceChange }) => {
               value={invoice.companyPhone}
               onChange={handleCompanyChange}
               placeholder="Enter official contact number"
-              className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+              onBlur={() => markTouched('companyPhone')}
+              aria-invalid={Boolean(touched.companyPhone && fieldErrors.companyPhone)}
+              className={`w-full px-3 py-2 border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent ${touched.companyPhone && fieldErrors.companyPhone ? 'border-red-400' : 'border-gray-300'}`}
             />
+            {touched.companyPhone && fieldErrors.companyPhone && (
+              <p className="mt-1 text-xs text-red-600">{fieldErrors.companyPhone}</p>
+            )}
           </div>
         </div>
         <div>
@@ -144,8 +184,13 @@ const InvoiceForm = ({ invoice, onInvoiceChange }) => {
             value={invoice.companyAddress}
             onChange={handleCompanyChange}
             placeholder="Enter your company address"
-            className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent resize-none min-h-20"
+            onBlur={() => markTouched('companyAddress')}
+            aria-invalid={Boolean(touched.companyAddress && fieldErrors.companyAddress)}
+            className={`w-full px-3 py-2 border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent resize-none min-h-20 ${touched.companyAddress && fieldErrors.companyAddress ? 'border-red-400' : 'border-gray-300'}`}
           />
+          {touched.companyAddress && fieldErrors.companyAddress && (
+            <p className="mt-1 text-xs text-red-600">{fieldErrors.companyAddress}</p>
+          )}
         </div>
       </div>
 
@@ -160,8 +205,13 @@ const InvoiceForm = ({ invoice, onInvoiceChange }) => {
             value={invoice.clientName}
             onChange={handleClientChange}
             placeholder="Client Name"
-            className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+            onBlur={() => markTouched('clientName')}
+            aria-invalid={Boolean(touched.clientName && fieldErrors.clientName)}
+            className={`w-full px-3 py-2 border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent ${touched.clientName && fieldErrors.clientName ? 'border-red-400' : 'border-gray-300'}`}
           />
+          {touched.clientName && fieldErrors.clientName && (
+            <p className="mt-1 text-xs text-red-600">{fieldErrors.clientName}</p>
+          )}
         </div>
         <div className="grid grid-cols-2 gap-4 mb-4">
           <div>
@@ -172,8 +222,13 @@ const InvoiceForm = ({ invoice, onInvoiceChange }) => {
               value={invoice.clientEmail}
               onChange={handleClientChange}
               placeholder="Client mail ID"
-              className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+              onBlur={() => markTouched('clientEmail')}
+              aria-invalid={Boolean(touched.clientEmail && fieldErrors.clientEmail)}
+              className={`w-full px-3 py-2 border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent ${touched.clientEmail && fieldErrors.clientEmail ? 'border-red-400' : 'border-gray-300'}`}
             />
+            {touched.clientEmail && fieldErrors.clientEmail && (
+              <p className="mt-1 text-xs text-red-600">{fieldErrors.clientEmail}</p>
+            )}
           </div>
           <div>
             <label className="block mb-2 font-semibold text-gray-700 text-sm">Phone</label>
@@ -183,8 +238,13 @@ const InvoiceForm = ({ invoice, onInvoiceChange }) => {
               value={invoice.clientPhone}
               onChange={handleClientChange}
               placeholder="Enter client's phone number"
-              className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+              onBlur={() => markTouched('clientPhone')}
+              aria-invalid={Boolean(touched.clientPhone && fieldErrors.clientPhone)}
+              className={`w-full px-3 py-2 border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent ${touched.clientPhone && fieldErrors.clientPhone ? 'border-red-400' : 'border-gray-300'}`}
             />
+            {touched.clientPhone && fieldErrors.clientPhone && (
+              <p className="mt-1 text-xs text-red-600">{fieldErrors.clientPhone}</p>
+            )}
           </div>
         </div>
         <div>
@@ -194,8 +254,13 @@ const InvoiceForm = ({ invoice, onInvoiceChange }) => {
             value={invoice.clientAddress}
             onChange={handleClientChange}
             placeholder="Enter client's address"
-            className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent resize-none min-h-20"
+            onBlur={() => markTouched('clientAddress')}
+            aria-invalid={Boolean(touched.clientAddress && fieldErrors.clientAddress)}
+            className={`w-full px-3 py-2 border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent resize-none min-h-20 ${touched.clientAddress && fieldErrors.clientAddress ? 'border-red-400' : 'border-gray-300'}`}
           />
+          {touched.clientAddress && fieldErrors.clientAddress && (
+            <p className="mt-1 text-xs text-red-600">{fieldErrors.clientAddress}</p>
+          )}
         </div>
       </div>
 
@@ -210,38 +275,67 @@ const InvoiceForm = ({ invoice, onInvoiceChange }) => {
             <div className="p-3 text-right">Amount</div>
             <div className="p-3 text-center">Action</div>
           </div>
-          {invoice.items.map(item => (
-            <div key={item.id} className="grid gap-0 border-b hover:bg-gray-100 items-center" style={{ gridTemplateColumns: '2fr 100px 100px 100px 80px' }}>
-              <input
-                type="text"
-                placeholder="Item description"
-                value={item.description}
-                onChange={(e) => handleItemChange(item.id, 'description', e.target.value)}
-                className="p-3 border-r border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-inset"
-              />
-              <input
-                type="number"
-                placeholder="Qty"
-                value={item.quantity}
-                onChange={(e) => handleItemChange(item.id, 'quantity', e.target.value)}
-                className="p-3 border-r border-gray-200 text-center text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-inset"
-              />
-              <input
-                type="number"
-                placeholder="Rate"
-                value={item.rate}
-                onChange={(e) => handleItemChange(item.id, 'rate', e.target.value)}
-                className="p-3 border-r border-gray-200 text-right text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-inset"
-              />
-              <div className="p-3 border-r border-gray-200 text-right text-sm">${item.amount.toFixed(2)}</div>
-              <button
-                onClick={() => removeItem(item.id)}
-                className="p-3 bg-red-500 hover:bg-red-600 text-white text-sm font-semibold transition"
-              >
-                Delete
-              </button>
-            </div>
-          ))}
+          {invoice.items.map((item, index) => {
+            const itemErrors = itemsErrors[index] || null;
+            const descriptionKey = `item-${item.id}-description`;
+            const quantityKey = `item-${item.id}-quantity`;
+            const rateKey = `item-${item.id}-rate`;
+
+            return (
+              <div key={item.id} className="grid gap-0 border-b hover:bg-gray-100 items-center" style={{ gridTemplateColumns: '2fr 100px 100px 100px 80px' }}>
+                <input
+                  type="text"
+                  placeholder="Item description"
+                  value={item.description}
+                  onChange={(e) => handleItemChange(item.id, 'description', e.target.value)}
+                  onBlur={() => markTouched(descriptionKey)}
+                  aria-invalid={Boolean(touched[descriptionKey] && itemErrors?.description)}
+                  className={`p-3 border-r text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-inset ${touched[descriptionKey] && itemErrors?.description ? 'border-red-300' : 'border-gray-200'}`}
+                />
+                <input
+                  type="number"
+                  placeholder="Qty"
+                  value={item.quantity}
+                  onChange={(e) => handleItemChange(item.id, 'quantity', e.target.value)}
+                  onBlur={() => markTouched(quantityKey)}
+                  min="1"
+                  aria-invalid={Boolean(touched[quantityKey] && itemErrors?.quantity)}
+                  className={`p-3 border-r text-center text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-inset ${touched[quantityKey] && itemErrors?.quantity ? 'border-red-300' : 'border-gray-200'}`}
+                />
+                <input
+                  type="number"
+                  placeholder="Rate"
+                  value={item.rate}
+                  onChange={(e) => handleItemChange(item.id, 'rate', e.target.value)}
+                  onBlur={() => markTouched(rateKey)}
+                  min="0"
+                  aria-invalid={Boolean(touched[rateKey] && itemErrors?.rate)}
+                  className={`p-3 border-r text-right text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-inset ${touched[rateKey] && itemErrors?.rate ? 'border-red-300' : 'border-gray-200'}`}
+                />
+                <div className="p-3 border-r border-gray-200 text-right text-sm">${item.amount.toFixed(2)}</div>
+                <button
+                  onClick={() => removeItem(item.id)}
+                  className="p-3 bg-red-500 hover:bg-red-600 text-white text-sm font-semibold transition"
+                >
+                  Delete
+                </button>
+              </div>
+            );
+          })}
+          {invoice.items.map((item, index) => {
+            const itemErrors = itemsErrors[index];
+            if (!itemErrors) return null;
+            const descriptionKey = `item-${item.id}-description`;
+            const quantityKey = `item-${item.id}-quantity`;
+            const rateKey = `item-${item.id}-rate`;
+            const showRowError = touched[descriptionKey] || touched[quantityKey] || touched[rateKey];
+            if (!showRowError) return null;
+            return (
+              <div key={`${item.id}-errors`} className="px-3 py-2 bg-red-50 text-xs text-red-600 border-b border-red-100">
+                {[itemErrors.description, itemErrors.quantity, itemErrors.rate].filter(Boolean).join(' ')}
+              </div>
+            );
+          })}
         </div>
         <button onClick={addItem} className="mt-4 px-4 py-2 bg-green-500 hover:bg-green-600 text-white font-semibold rounded-md transition">
           + Add Item
@@ -262,8 +356,13 @@ const InvoiceForm = ({ invoice, onInvoiceChange }) => {
               placeholder="0"
               min="0"
               max="100"
-              className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+              onBlur={() => markTouched('tax')}
+              aria-invalid={Boolean(touched.tax && fieldErrors.tax)}
+              className={`w-full px-3 py-2 border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent ${touched.tax && fieldErrors.tax ? 'border-red-400' : 'border-gray-300'}`}
             />
+            {touched.tax && fieldErrors.tax && (
+              <p className="mt-1 text-xs text-red-600">{fieldErrors.tax}</p>
+            )}
           </div>
           <div>
             <label className="block mb-2 font-semibold text-gray-700 text-sm">Discount ($)</label>
@@ -274,8 +373,13 @@ const InvoiceForm = ({ invoice, onInvoiceChange }) => {
               onChange={handleMetadataChange}
               placeholder="0"
               min="0"
-              className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+              onBlur={() => markTouched('discount')}
+              aria-invalid={Boolean(touched.discount && fieldErrors.discount)}
+              className={`w-full px-3 py-2 border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent ${touched.discount && fieldErrors.discount ? 'border-red-400' : 'border-gray-300'}`}
             />
+            {touched.discount && fieldErrors.discount && (
+              <p className="mt-1 text-xs text-red-600">{fieldErrors.discount}</p>
+            )}
           </div>
         </div>
         <div>

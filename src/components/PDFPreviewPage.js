@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useCallback, useEffect, useRef } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import html2pdf from 'html2pdf.js';
 import './PDFPreviewPage.css';
@@ -19,7 +19,7 @@ const PDFPreviewPage = () => {
   const taxAmount = subtotal * (taxRate / 100);
   const total = subtotal + taxAmount - discountAmount;
 
-  const downloadPDFWithHtml2PDF = () => {
+  const downloadPDFWithHtml2PDF = useCallback(() => {
     const element = document.getElementById('invoice-print');
     if (!element) return;
 
@@ -50,14 +50,14 @@ const PDFPreviewPage = () => {
       .finally(() => {
         element.classList.remove('export-mode');
       });
-  };
+  }, [invoice?.invoiceNumber]);
 
   useEffect(() => {
     if (invoice && location.state?.autoDownload && isInvoiceValid && !hasAutoDownloadedRef.current) {
       hasAutoDownloadedRef.current = true;
       setTimeout(() => downloadPDFWithHtml2PDF(), 0);
     }
-  }, [invoice, location.state?.autoDownload, isInvoiceValid]);
+  }, [invoice, location.state?.autoDownload, isInvoiceValid, downloadPDFWithHtml2PDF]);
 
   if (!invoice) {
     return (
